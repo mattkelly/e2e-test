@@ -1,0 +1,86 @@
+configuration:
+  resource:
+    google_compute_firewall:
+      containership-firewall:
+        allow:
+        - protocol: all
+        name: containership-${var.cluster["id"]}
+        network: ${google_compute_network.containership.name}
+        project: melodic-park-143616
+        source_ranges:
+        - 0.0.0.0/0
+        target_tags:
+        - containership-${var.cluster["id"]}
+    google_compute_instance:
+      np0:
+        boot_disk:
+          initialize_params:
+            image: centos-7
+            size: 100
+            type: pd-ssd
+        machine_type: n1-standard-2
+        network_interface:
+          access_config:
+          - {}
+          subnetwork: ${google_compute_subnetwork.containership-cluster-subnet.name}
+          subnetwork_project: melodic-park-143616
+        project: melodic-park-143616
+        service_account:
+          scopes:
+          - cloud-platform
+        tags:
+        - containership-${var.cluster["id"]}
+        zone: us-central1-b
+      np1:
+        boot_disk:
+          initialize_params:
+            image: centos-7
+            size: 100
+            type: pd-ssd
+        machine_type: n1-standard-2
+        network_interface:
+          access_config:
+          - {}
+          subnetwork: ${google_compute_subnetwork.containership-cluster-subnet.name}
+          subnetwork_project: melodic-park-143616
+        project: melodic-park-143616
+        service_account:
+          scopes:
+          - cloud-platform
+        tags:
+        - containership-${var.cluster["id"]}
+        zone: us-central1-b
+    google_compute_network:
+      containership:
+        auto_create_subnetworks: false
+        description: Containership Cloud Network
+        name: containership-${var.cluster["id"]}
+        project: melodic-park-143616
+    google_compute_subnetwork:
+      containership-cluster-subnet:
+        ip_cidr_range: 10.0.1.0/24
+        name: containership-${var.cluster["id"]}
+        network: ${google_compute_network.containership.name}
+        project: melodic-park-143616
+        region: us-central1
+  variable:
+    np0:
+      default:
+        count: 1
+        kubernetes_mode: worker
+        kubernetes_version: {{.WorkerKubernetesVersion}}
+        name: worker-pool-1
+        os: centos
+        type: node_pool
+    np1:
+      default:
+        count: 3
+        etcd: true
+        kubernetes_mode: master
+        kubernetes_version: {{.MasterKubernetesVersion}}
+        name: master-pool-1
+        os: centos
+        type: node_pool
+description: {{.Description}}
+engine: containership_kubernetes_engine
+provider_name: google

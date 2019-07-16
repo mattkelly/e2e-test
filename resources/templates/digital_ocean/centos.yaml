@@ -1,0 +1,34 @@
+configuration:
+  resource:
+    digitalocean_droplet:
+      np0:
+        image: centos-7-x64
+        private_networking: true
+        region: sfo2
+        size: s-2vcpu-2gb
+      np1:
+        image: centos-7-x64
+        private_networking: true
+        region: sfo2
+        size: s-2vcpu-2gb
+  variable:
+    np0:
+      default:
+        count: 3
+        etcd: true
+        kubernetes_mode: master
+        kubernetes_version: {{.MasterKubernetesVersion}}
+        name: master-pool-1
+        os: centos
+        type: node_pool
+    np1:
+      default:
+        count: 1
+        kubernetes_mode: worker
+        kubernetes_version: {{.WorkerKubernetesVersion}}
+        name: worker-pool-0
+        os: centos
+        type: node_pool
+description: {{.Description}}
+engine: containership_kubernetes_engine
+provider_name: digital_ocean

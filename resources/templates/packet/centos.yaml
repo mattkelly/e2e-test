@@ -1,0 +1,34 @@
+configuration:
+  resource:
+    packet_device:
+      np0:
+        facility: ewr1
+        operating_system: centos_7
+        plan: t1.small.x86
+        project_id: a9da54e3-cd5b-4b18-b198-eb499b5cc1da
+      np1:
+        facility: ewr1
+        operating_system: centos_7
+        plan: t1.small.x86
+        project_id: a9da54e3-cd5b-4b18-b198-eb499b5cc1da
+  variable:
+    np0:
+      default:
+        count: 1
+        kubernetes_mode: worker
+        kubernetes_version: {{.WorkerKubernetesVersion}}
+        name: worker-pool-1
+        os: centos
+        type: node_pool
+    np1:
+      default:
+        count: 3
+        etcd: true
+        kubernetes_mode: master
+        kubernetes_version: {{.MasterKubernetesVersion}}
+        name: master-pool-1
+        os: centos
+        type: node_pool
+description: {{.Description}}
+engine: containership_kubernetes_engine
+provider_name: packet

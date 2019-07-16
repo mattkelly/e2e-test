@@ -1,0 +1,93 @@
+configuration:
+  provider:
+    aws:
+      region: us-east-1
+  resource:
+    aws_instance:
+      np1:
+        ami: ami-02eac2c0129f6376b
+        associate_public_ip_address: true
+        availability_zone: us-east-1a
+        depends_on:
+        - aws_main_route_table_association.containership
+        instance_type: t2.medium
+        subnet_id: ${aws_subnet.containership.id}
+        vpc_security_group_ids:
+        - ${aws_security_group.containership.id}
+      np2:
+        ami: ami-02eac2c0129f6376b
+        associate_public_ip_address: true
+        availability_zone: us-east-1a
+        depends_on:
+        - aws_main_route_table_association.containership
+        instance_type: t2.medium
+        subnet_id: ${aws_subnet.containership.id}
+        vpc_security_group_ids:
+        - ${aws_security_group.containership.id}
+    aws_internet_gateway:
+      containership:
+        tags:
+          Name: containership-${var.cluster["id"]}
+        vpc_id: ${aws_vpc.containership.id}
+    aws_main_route_table_association:
+      containership:
+        route_table_id: ${aws_route_table.containership.id}
+        vpc_id: ${aws_vpc.containership.id}
+    aws_route_table:
+      containership:
+        route:
+        - cidr_block: 0.0.0.0/0
+          gateway_id: ${aws_internet_gateway.containership.id}
+        tags:
+          Name: containership-${var.cluster["id"]}
+        vpc_id: ${aws_vpc.containership.id}
+    aws_security_group:
+      containership:
+        description: Allowallinboundtraffic
+        egress:
+        - cidr_blocks:
+          - 0.0.0.0/0
+          from_port: 0
+          protocol: "-1"
+          to_port: 0
+        ingress:
+        - cidr_blocks:
+          - 0.0.0.0/0
+          from_port: 0
+          protocol: "-1"
+          to_port: 0
+        name: allow_all
+        vpc_id: ${aws_vpc.containership.id}
+    aws_subnet:
+      containership:
+        availability_zone: us-east-1a
+        cidr_block: 10.0.1.0/24
+        tags:
+          Name: containership-${var.cluster["id"]}-us-east-1a
+        vpc_id: ${aws_vpc.containership.id}
+    aws_vpc:
+      containership:
+        cidr_block: 10.0.0.0/16
+        tags:
+          Name: containership-${var.cluster["id"]}
+  variable:
+    np1:
+      default:
+        count: 3
+        etcd: true
+        kubernetes_mode: master
+        kubernetes_version: {{.MasterKubernetesVersion}}
+        name: masternodepool
+        os: centos
+        type: node_pool
+    np2:
+      default:
+        count: 1
+        kubernetes_mode: worker
+        kubernetes_version: {{.WorkerKubernetesVersion}}
+        name: workernodepool
+        os: centos
+        type: node_pool
+description: {{.Description}}
+engine: containership_kubernetes_engine
+provider_name: amazon_web_services

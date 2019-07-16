@@ -1,0 +1,129 @@
+configuration:
+  provider:
+    azurerm:
+      subscription_id: f3bf50e5-52d6-47bb-af92-eaae7ea761c4
+  resource:
+    azurerm_availability_set:
+      containership:
+        location: ${azurerm_resource_group.containership.location}
+        managed: true
+        name: cs-${var.cluster["id"]}
+        platform_fault_domain_count: 2
+        resource_group_name: ${azurerm_resource_group.containership.name}
+    azurerm_network_security_group:
+      containership:
+        location: ${azurerm_resource_group.containership.location}
+        name: ${var.cluster["id"]}-sg
+        resource_group_name: ${azurerm_resource_group.containership.name}
+        security_rule:
+        - access: Allow
+          destination_address_prefix: '*'
+          destination_port_range: '*'
+          direction: Inbound
+          name: allow_all
+          priority: 100
+          protocol: Tcp
+          source_address_prefix: '*'
+          source_port_range: '*'
+    azurerm_resource_group:
+      containership:
+        location: eastus
+        name: e2e-{{.MasterKubernetesVersion}}-{{.Timestamp}}
+    azurerm_subnet:
+    azurerm_subnet:
+      containership:
+        address_prefix: 10.0.0.0/24
+        name: containership-subnet
+        resource_group_name: ${azurerm_resource_group.containership.name}
+        virtual_network_name: ${azurerm_virtual_network.containership.name}
+    azurerm_virtual_machine:
+      np0:
+        availability_set_id: ${azurerm_availability_set.containership.id}
+        location: ${azurerm_resource_group.containership.location}
+        os_profile:
+          admin_username: azureadmin
+          computer_name: containership
+        os_profile_linux_config:
+          disable_password_authentication: true
+          ssh_keys:
+          {{if .SSHPublicKey}}
+          ssh_keys:
+          - key_data: {{.SSHPublicKey}}
+            path: /home/azureadmin/.ssh/authorized_keys
+          {{end}}
+        resource_group_name: ${azurerm_resource_group.containership.name}
+        storage_data_disk:
+        - caching: ReadWrite
+          create_option: Empty
+          disk_size_gb: 64
+          lun: 0
+          name: containership-disk-1534883450129
+        storage_image_reference:
+          offer: UbuntuServer
+          publisher: Canonical
+          sku: 16.04-LTS
+          version: latest
+        storage_os_disk:
+          caching: ReadWrite
+          create_option: FromImage
+          managed_disk_type: Standard_LRS
+        vm_size: Standard_A2_v2
+      np1:
+        availability_set_id: ${azurerm_availability_set.containership.id}
+        location: ${azurerm_resource_group.containership.location}
+        os_profile:
+          admin_username: azureadmin
+          computer_name: containership
+        os_profile_linux_config:
+          disable_password_authentication: true
+          ssh_keys:
+          {{if .SSHPublicKey}}
+          ssh_keys:
+          - key_data: {{.SSHPublicKey}}
+            path: /home/azureadmin/.ssh/authorized_keys
+          {{end}}
+        resource_group_name: ${azurerm_resource_group.containership.name}
+        storage_data_disk:
+        - caching: ReadWrite
+          create_option: Empty
+          disk_size_gb: 64
+          lun: 1
+          name: containership-disk-1534883450129
+        storage_image_reference:
+          offer: UbuntuServer
+          publisher: Canonical
+          sku: 16.04-LTS
+          version: latest
+        storage_os_disk:
+          caching: ReadWrite
+          create_option: FromImage
+          managed_disk_type: Standard_LRS
+        vm_size: Standard_A2_v2
+    azurerm_virtual_network:
+      containership:
+        address_space:
+        - 10.0.0.0/16
+        location: ${azurerm_resource_group.containership.location}
+        name: containership-network
+        resource_group_name: ${azurerm_resource_group.containership.name}
+  variable:
+    np0:
+      default:
+        count: 1
+        kubernetes_mode: worker
+        kubernetes_version: {{.WorkerKubernetesVersion}}
+        name: worker-pool-1
+        os: ubuntu
+        type: node_pool
+    np1:
+      default:
+        count: 3
+        etcd: true
+        kubernetes_mode: master
+        kubernetes_version: {{.MasterKubernetesVersion}}
+        name: master-pool-1
+        os: ubuntu
+        type: node_pool
+description: {{.Description}}
+engine: containership_kubernetes_engine
+provider_name: azure
