@@ -1,0 +1,17 @@
+# git
+.git
+.gitignore
+.github
+
+# go vendoring
+vendor
+
+# Test binary, build with `go test -c`
+*.test
+
+# CI
+Jenkinsfile
+
+# misc
+LICENSE
+*.md

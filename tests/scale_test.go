@@ -3,6 +3,7 @@ package scale
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -33,6 +34,11 @@ type scaleContext struct {
 }
 
 var context *scaleContext
+
+const (
+	// Some providers take a looong time to spin up a new node
+	scaleTimeout = 15 * time.Minute
+)
 
 func TestScale(t *testing.T) {
 	// Hook up gomega to ginkgo
@@ -215,7 +221,7 @@ func (c *scaleContext) waitForNodePoolUpdating(id string) error {
 
 func (c *scaleContext) waitForNodePoolRunning(id string) error {
 	return wait.PollImmediate(constants.DefaultPollInterval,
-		constants.DefaultTimeout,
+		scaleTimeout,
 		func() (bool, error) {
 			pool, err := c.ContainershipClientset.Provision().
 				NodePools(c.OrganizationID, c.ClusterID).

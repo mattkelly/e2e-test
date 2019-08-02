@@ -2,6 +2,7 @@ package provision
 
 import (
 	"bytes"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -51,12 +52,18 @@ type provisionContext struct {
 
 var context *provisionContext
 
+const (
+	provisionPollInterval = 1 * time.Second
+	provisionTimeout      = 20 * time.Minute
+)
+
 // Flags
 var (
 	templateFilename     string
 	providerID           string
 	kubernetesVersion    string
 	sshPublicKeyFilename string
+	sshPublicKeyBase64   string
 
 	debugEnabled bool
 )
@@ -65,7 +72,8 @@ func init() {
 	flag.StringVar(&templateFilename, "template", "", "path to template file to use")
 	flag.StringVar(&providerID, "provider", "", "provider ID to use")
 	flag.StringVar(&kubernetesVersion, "kubernetes-version", "", "Kubernetes version to provision (without leading 'v')")
-	flag.StringVar(&sshPublicKeyFilename, "ssh-public-key", "", "path to SSH public key file to provide in template (if applicable)")
+	flag.StringVar(&sshPublicKeyFilename, "ssh-public-key-file", "", "path to SSH public key file to provide in template if applicable (can't be combined with --ssh-public-key)")
+	flag.StringVar(&sshPublicKeyBase64, "ssh-public-key", "", "Base64-encoded SSH public key to provide in template if applicable (can't be combined with --ssh-public-key-file)")
 
 	flag.BoolVar(&debugEnabled, "debug", false, "enable Containership client debug mode (not to be confused with ginkgo debug, which is separate)")
 }
@@ -117,10 +125,19 @@ var _ = Describe("Provisioning a cluster", func() {
 		tmpl, err := template.ParseFiles(templateFilename)
 		Expect(err).NotTo(HaveOccurred())
 
+		if sshPublicKeyFilename != "" && sshPublicKeyBase64 != "" {
+			Fail("please specify one or neither of --ssh-public-key-file or --ssh-public-key, but not both")
+		}
+
 		var sshPublicKey string
 		if sshPublicKeyFilename != "" {
 			By("reading SSH public key from file")
 			b, err := ioutil.ReadFile(sshPublicKeyFilename)
+			Expect(err).NotTo(HaveOccurred())
+			sshPublicKey = string(b)
+		} else if sshPublicKeyBase64 != "" {
+			By("reading base64-decoding the SSH public key")
+			b, err := base64.StdEncoding.DecodeString(sshPublicKeyBase64)
 			Expect(err).NotTo(HaveOccurred())
 			sshPublicKey = string(b)
 		}
@@ -282,7 +299,7 @@ var _ = Describe("Provisioning a cluster", func() {
 })
 
 func waitForClusterRunning() error {
-	return wait.PollImmediate(1*time.Second, 20*time.Minute, func() (bool, error) {
+	return wait.PollImmediate(provisionPollInterval, provisionTimeout, func() (bool, error) {
 		cluster, err := context.containershipClientset.Provision().
 			CKEClusters(context.organizationID).
 			Get(context.clusterID)

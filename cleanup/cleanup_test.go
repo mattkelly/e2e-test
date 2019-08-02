@@ -3,6 +3,7 @@ package cleanup
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -26,6 +27,11 @@ type cleanupContext struct {
 }
 
 var context *cleanupContext
+
+const (
+	deletePollInterval = 1 * time.Second
+	deleteTimeout      = 8 * time.Minute
+)
 
 func TestScale(t *testing.T) {
 	// Hook up gomega to ginkgo
@@ -85,8 +91,8 @@ var _ = Describe("Cleaning up a cluster", func() {
 })
 
 func (c *cleanupContext) waitForClusterDeleted() error {
-	return wait.PollImmediate(constants.DefaultPollInterval,
-		constants.DefaultTimeout,
+	return wait.PollImmediate(deletePollInterval,
+		deleteTimeout,
 		func() (bool, error) {
 			cluster, err := c.ContainershipClientset.Provision().
 				CKEClusters(c.OrganizationID).
