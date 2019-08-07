@@ -338,7 +338,6 @@ func waitForAllNodePoolsRunning() error {
 					continue
 				case "UPDATING":
 					running = false
-					break
 				default:
 					return false, errors.Errorf("node pool %q entered unexpected state %q", pool.ID, status)
 				}

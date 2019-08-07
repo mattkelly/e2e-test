@@ -5,12 +5,15 @@ IMAGE_TAG ?= "latest"
 PKG_LIST := $(shell go list ./...)
 GO_FILES := $(shell find . -type f -not -path './vendor/*' -name '*.go')
 
-# Ensure go module support is enabled, i.e.
-# This is required in case this repo lives in the $GOPATH/src tree.
-export GO111MODULE=on
-
 .PHONY: all
 all: build ## (default) Build
+
+.PHONY: check
+check: fmt-check golangci ## Run all checkers
+
+.PHONY: golangci
+golangci: ## Run GolangCI checks
+	@golangci-lint run
 
 .PHONY: fmt-check
 fmt-check: ## Check the file format
@@ -20,10 +23,6 @@ fmt-check: ## Check the file format
 			gofmt -s -e -d $(GO_FILES); \
 			exit 1; \
 		fi
-
-.PHONY: lint
-lint: ## Lint the files
-	@golint -set_exit_status ${PKG_LIST}
 
 .PHONY: test
 test: ## Run unit tests

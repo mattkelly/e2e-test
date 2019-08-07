@@ -1,0 +1,83 @@
+version:
+  2
+
+jobs:
+  test:
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - checkout
+      - run: go mod vendor
+      - run: go install -mod vendor "github.com/golangci/golangci-lint/cmd/golangci-lint"
+      - run:
+          name: Format Check
+          command: make fmt-check
+      - run:
+          name: Lint and Static Analysis
+          command: make check
+
+  build:
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Docker build
+          command: make
+
+  build-and-publish:
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: |
+            export IMAGE_NAME=$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+            export IMAGE_TAG=`if [ -z $CIRCLE_TAG ]; then echo latest; else echo $CIRCLE_TAG; fi`
+            echo "Building Docker image $IMAGE_NAME:$IMAGE_TAG"
+            make docker
+            echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin
+            echo "Pushing Docker image $IMAGE_NAME:$IMAGE_TAG"
+            docker push $IMAGE_NAME:$IMAGE_TAG
+            docker logout
+
+workflows:
+  version: 2
+
+  commit:
+    jobs:
+      - test
+
+      - build:
+          filters:
+            branches:
+              ignore: master # master runs the publish job instead
+
+      - build-and-publish:
+          context: containershipbot
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - master
+
+  release:
+    jobs:
+      - test:
+          filters:  # filters are required to match build-and-publish job since it requires this one
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+
+      - build-and-publish:
+          context: containershipbot
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/

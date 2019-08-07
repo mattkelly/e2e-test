@@ -678,6 +678,7 @@
   input-imports = [
     "github.com/containership/csctl/cloud",
     "github.com/containership/csctl/cloud/provision/types",
+    "github.com/containership/csctl/cloud/rest",
     "github.com/containership/csctl/resource/options",
     "github.com/ghodss/yaml",
     "github.com/onsi/ginkgo",
