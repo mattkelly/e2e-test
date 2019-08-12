@@ -13,7 +13,7 @@ def slackNotifierTokenId = 'slack_notifier_token_cs';
 def slack_message = "${env.JOB_NAME} - build:${env.BUILD_NUMBER} (${env.RUN_DISPLAY_URL}) ";
 def slack_color = '#228B22'
 
-def supportedKubernetesVersions = ['1.13.4', '1.14.3']
+def supportedKubernetesVersions = ['1.13.4', '1.14.3', '1.15.2']
 
 def providerIDs = [
 "amazon_web_services": "47b7617e-3ed5-44e3-ae46-573eb23d674b",
