@@ -4,11 +4,11 @@ configuration:
       np0:
         facility: ewr1
         plan: t1.small.x86
-        project_id: a9da54e3-cd5b-4b18-b198-eb499b5cc1da
+        project_id: a6e84c03-33be-4f7a-adba-5a434d8d08b7
       np1:
         facility: ewr1
         plan: t1.small.x86
-        project_id: a9da54e3-cd5b-4b18-b198-eb499b5cc1da
+        project_id: a6e84c03-33be-4f7a-adba-5a434d8d08b7
   variable:
     np0:
       default:

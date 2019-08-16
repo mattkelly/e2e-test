@@ -20,7 +20,7 @@ def providerIDs = [
 "azure": "f1d81322-5ab5-42be-9e44-a6a7c99c5ca2",
 "digital_ocean": "08cd67a1-6837-487d-894d-d01827fbf840",
 "google": "32c22c2c-f99d-4db6-8923-2ed98dedf01d",
-"packet": "42848de0-b3f8-4900-ac03-652407518ded",
+"packet": "62af3ddc-bc36-4272-a7bf-29fb61babd24",
 ]
 
 try {
