@@ -54,7 +54,7 @@ var context *provisionContext
 
 const (
 	provisionPollInterval = 1 * time.Second
-	provisionTimeout      = 20 * time.Minute
+	provisionTimeout      = 30 * time.Minute
 )
 
 // Flags

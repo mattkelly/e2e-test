@@ -30,7 +30,7 @@ var context *cleanupContext
 
 const (
 	deletePollInterval = 1 * time.Second
-	deleteTimeout      = 8 * time.Minute
+	deleteTimeout      = 45 * time.Minute
 )
 
 func TestScale(t *testing.T) {
