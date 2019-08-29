@@ -25,6 +25,49 @@ def providerIDs = [
 
 try {
     pipelineUtils.jenkinsWithNodeTemplate {
+        properties(
+            [
+            pipelineTriggers(
+                [
+                parameterizedCron('''
+                # -- AWS --
+                H 10 * * * % PROVIDER_NAME=amazon_web_services; TEMPLATE_NAME=centos
+                H 12 * * * % PROVIDER_NAME=amazon_web_services; TEMPLATE_NAME=ubuntu
+
+                # -- Azure --
+                H 10 * * * % PROVIDER_NAME=azure; TEMPLATE_NAME=centos
+                H 12 * * * % PROVIDER_NAME=azure; TEMPLATE_NAME=ubuntu
+
+                # -- DigitalOcean --
+                H 10 * * * % PROVIDER_NAME=digital_ocean; TEMPLATE_NAME=centos
+                H 12 * * * % PROVIDER_NAME=digital_ocean; TEMPLATE_NAME=ubuntu
+
+                # -- Google --
+                H 10 * * * % PROVIDER_NAME=google; TEMPLATE_NAME=centos
+                H 12 * * * % PROVIDER_NAME=google; TEMPLATE_NAME=ubuntu
+
+                # -- Packet --
+                # Runs must be staggered in order to not overload this provider
+                # TODO no real evidence to support this besides consistently
+                # failing runs when not staggered due to instances failing to come up
+                # TODO it'd be neat if we could just index into
+                # supportedKubernetesVersions here to make it less fragile
+                # CentOS
+                H 10 * * * % PROVIDER_NAME=packet; TEMPLATE_NAME=centos; KUBERNETES_VERSION=1.13.10
+                H 11 * * * % PROVIDER_NAME=packet; TEMPLATE_NAME=centos; KUBERNETES_VERSION=1.14.6
+                H 12 * * * % PROVIDER_NAME=packet; TEMPLATE_NAME=centos; KUBERNETES_VERSION=1.15.3
+
+                # Ubuntu
+                H 13 * * * % PROVIDER_NAME=packet; TEMPLATE_NAME=ubuntu; KUBERNETES_VERSION=1.13.10
+                H 14 * * * % PROVIDER_NAME=packet; TEMPLATE_NAME=ubuntu; KUBERNETES_VERSION=1.14.6
+                H 15 * * * % PROVIDER_NAME=packet; TEMPLATE_NAME=ubuntu; KUBERNETES_VERSION=1.15.3
+                '''
+                )
+                ]
+            )
+            ]
+        )
+
         // deploy to all the clusters
         withCredentials([string(credentialsId: csTokenId, variable: 'CS_TOKEN')]) {
             stage('Prepare Testing') {
@@ -53,9 +96,18 @@ try {
                 provisionBaseArgs.add("--ssh-public-key ${env.SSH_PUBLIC_KEY}")
             }
 
+            // By default, run all supported versions
+            def runVersions = supportedKubernetesVersions
+            if (env.KUBERNETES_VERSION) {
+                // A specific version was specified, so only run that version.
+                // Don't verify that the version is valid/supported - assume
+                // that the caller knows what they're doing.
+                runVersions = [env.KUBERNETES_VERSION]
+            }
+
             // Run all supported Kubernetes versions in parallel
             // `parallel` expects a map, so build it here
-            def parallelStageMap = supportedKubernetesVersions.collectEntries { version ->
+            def parallelStageMap = runVersions.collectEntries { version ->
                 [
                 "${version}" : {
                     stage("Kubernetes ${version} Test") {
