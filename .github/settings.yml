@@ -1,0 +1,6 @@
+_extends: containership/probot-root:.github/_settings.yml
+
+repository:
+    name: e2e-test
+    description: End-to-end tests for Containership Kubernetes Engine
+    private: false
