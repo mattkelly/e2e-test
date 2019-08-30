@@ -10,10 +10,27 @@ def csTokenId = "containershipbot_cs_token"
 def testImage = "containership/e2e-test:latest"
 
 def slackNotifierTokenId = 'slack_notifier_token_cs';
-def slack_message = "${env.JOB_NAME} - build:${env.BUILD_NUMBER} (${env.RUN_DISPLAY_URL}) ";
 def slack_color = '#228B22'
 
 def supportedKubernetesVersions = ['1.13.10', '1.14.6', '1.15.3']
+
+// By default, run all supported versions
+def runVersions = supportedKubernetesVersions
+if (env.KUBERNETES_VERSION) {
+    // A specific version was specified, so only run that version.
+    // Don't verify that the version is valid/supported - assume
+    // that the caller knows what they're doing.
+    runVersions = [env.KUBERNETES_VERSION]
+}
+
+def slack_message = """
+Job: ${env.JOB_NAME}
+Build: ${env.BUILD_NUMBER}
+Provider: ${env.PROVIDER_NAME}
+Template: ${env.TEMPLATE_NAME}
+Versions: ${runVersions}
+URL: ${env.RUN_DISPLAY_URL}
+""";
 
 def providerIDs = [
 "amazon_web_services": "47b7617e-3ed5-44e3-ae46-573eb23d674b",
@@ -96,15 +113,6 @@ try {
                 provisionBaseArgs.add("--ssh-public-key ${env.SSH_PUBLIC_KEY}")
             }
 
-            // By default, run all supported versions
-            def runVersions = supportedKubernetesVersions
-            if (env.KUBERNETES_VERSION) {
-                // A specific version was specified, so only run that version.
-                // Don't verify that the version is valid/supported - assume
-                // that the caller knows what they're doing.
-                runVersions = [env.KUBERNETES_VERSION]
-            }
-
             // Run all supported Kubernetes versions in parallel
             // `parallel` expects a map, so build it here
             def parallelStageMap = runVersions.collectEntries { version ->
@@ -129,7 +137,10 @@ try {
         }
     }
 
-    slack_message = "Success: ${slack_message}";
+    slack_message = """
+✅ Success
+${slack_message}
+""";
 } catch(error) {
     def sw = new StringWriter();
     def pw = new PrintWriter(sw);
@@ -140,7 +151,17 @@ try {
     currentBuild.result = 'FAILURE';
 
     slack_color = '#B22222';
-    slack_message = "Failed: ${slack_message} Notifying @channel!\n\nError:\n```${err_str}```";
+    slack_message = """
+🚨 Failure
+
+${slack_message}
+(Notifying @channel)
+
+Error:
+```
+${err_str}
+```
+""";
 } finally {
     slackSend channel: "#e2e-tests", color: "${slack_color}", message: "${slack_message}";
 }
