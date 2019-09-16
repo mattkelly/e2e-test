@@ -8,6 +8,10 @@ GO_FILES := $(shell find . -type f -not -path './vendor/*' -name '*.go')
 .PHONY: all
 all: build ## (default) Build
 
+.PHONY: dep
+dep: ## Install dependencies
+	@dep ensure
+
 .PHONY: check
 check: fmt-check golangci ## Run all checkers
 

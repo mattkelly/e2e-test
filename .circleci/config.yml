@@ -5,10 +5,15 @@ jobs:
   test:
     docker:
       - image: circleci/golang:1.12
+    working_directory: /go/src/github.com/containership/e2e-test
     steps:
       - checkout
-      - run: go mod vendor
-      - run: go install -mod vendor "github.com/golangci/golangci-lint/cmd/golangci-lint"
+      - setup_remote_docker
+      - run: go get -u github.com/golang/dep/cmd/dep
+      - run: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+      - run:
+          name: Install dependencies
+          command: make dep
       - run:
           name: Format Check
           command: make fmt-check
@@ -19,6 +24,7 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.12
+    working_directory: /go/src/github.com/containership/e2e-test
     steps:
       - checkout
       - setup_remote_docker
@@ -29,6 +35,7 @@ jobs:
   build-and-publish:
     docker:
       - image: circleci/golang:1.12
+    working_directory: /go/src/github.com/containership/e2e-test
     steps:
       - checkout
       - setup_remote_docker
